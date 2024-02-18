@@ -31,7 +31,7 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             try
             {
                 var originalValidator = ServicePointManager.ServerCertificateValidationCallback;
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(delegate { return true; });
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
 
                 client.DownloadFile(DEPS_PROVIDER + unityVersion + ".zip", patcher._args.UnityDependenciesPath);
 

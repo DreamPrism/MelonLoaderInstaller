@@ -11,7 +11,7 @@ namespace MelonLoaderInstaller.Core.PatchSteps
     {
         public bool Run(Patcher patcher)
         {
-            using ZipFile archive = new ZipFile(patcher._info.OutputBaseApkPath);
+            using var archive = new ZipFile(patcher._info.OutputBaseApkPath);
 
             // Handle old installer files
             var dexEntries = archive.Entries.Where(a => a.FileName.Contains("originalDex")).ToArray();
@@ -36,11 +36,16 @@ namespace MelonLoaderInstaller.Core.PatchSteps
 
             // assets/melonloader data
             CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "core"), "assets/melonloader/etc", "*.dll");
-            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "managed"), "assets/melonloader/etc/managed", "*.dll");
-            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "mono", "bcl"), "assets/melonloader/etc/managed", "*.dll");
-            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "support_modules"), "assets/melonloader/etc/support", "*.dll");
-            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "assembly_generation"), "assets/melonloader/etc/assembly_generation/managed", "*.dll");
-            CopyTo(archive, Path.Combine(patcher._info.UnityManagedDirectory), "assets/melonloader/etc/assembly_generation/unity", "*.dll");
+            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "managed"), "assets/melonloader/etc/managed",
+                "*.dll");
+            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "mono", "bcl"),
+                "assets/melonloader/etc/managed", "*.dll");
+            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "support_modules"),
+                "assets/melonloader/etc/support", "*.dll");
+            CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "assembly_generation"),
+                "assets/melonloader/etc/assembly_generation/managed", "*.dll");
+            CopyTo(archive, Path.Combine(patcher._info.UnityManagedDirectory),
+                "assets/melonloader/etc/assembly_generation/unity", "*.dll");
 
             // assets/bin data
             CopyTo(archive, Path.Combine(patcher._info.LemonDataDirectory, "etc"), "assets/bin/Data/Managed/etc");
@@ -53,10 +58,13 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             }
             else
             {
-                using ZipFile libArchive = new ZipFile(patcher._info.OutputLibApkPath);
+                using var libArchive = new ZipFile(patcher._info.OutputLibApkPath);
+                libArchive.Entries.First(x => x.FileName.EndsWith("libunity.so"))
+                    .Extract(Path.Combine(patcher._info.LemonDataDirectory, "native"));
 
                 CopyTo(libArchive, Path.Combine(patcher._info.LemonDataDirectory, "native"), "lib/arm64-v8a", "*.so");
-                CopyTo(libArchive, Path.Combine(patcher._info.UnityNativeDirectory, "arm64-v8a"), "lib/arm64-v8a", "*.so");
+                CopyTo(libArchive, Path.Combine(patcher._info.UnityNativeDirectory, "arm64-v8a"), "lib/arm64-v8a",
+                    "*.so");
 
                 libArchive.Save();
             }
@@ -66,11 +74,11 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             return true;
         }
 
-        private void CopyTo(ZipFile archive, string source, string dest, string matcher = "*.*")
+        private static void CopyTo(ZipFile archive, string source, string dest, string matcher = "*.*")
         {
-            foreach (string file in Directory.GetFiles(source, matcher, SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(source, matcher, SearchOption.AllDirectories))
             {
-                string entryPath = Path.Combine(dest, Path.GetRelativePath(source, file)).Replace('\\', '/');
+                var entryPath = Path.Combine(dest, Path.GetRelativePath(source, file)).Replace('\\', '/');
 
                 // I don't think this is supposed to be needed, but I had an issue with an apk having two libmain.so files
                 if (archive.ContainsEntry(entryPath))

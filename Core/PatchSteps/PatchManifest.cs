@@ -44,20 +44,20 @@ namespace MelonLoaderInstaller.Core.PatchSteps
 
         private void PatchAPK(string apkPath)
         {
-            using ZipFile archive = new ZipFile(apkPath);
+            using var archive = new ZipFile(apkPath);
 
-            ZipEntry manifestEntry = archive.Entries.First(a => a.FileName == "AndroidManifest.xml");
+            var manifestEntry = archive.Entries.First(a => a.FileName == "AndroidManifest.xml");
             using Stream manifestStream = manifestEntry.OpenReader();
-            using MemoryStream memoryStream = new MemoryStream();
+            using var memoryStream = new MemoryStream();
 
             manifestStream.CopyTo(memoryStream);
             memoryStream.Position = 0;
 
-            AxmlElement manifest = AxmlLoader.LoadDocument(memoryStream);
+            var manifest = AxmlLoader.LoadDocument(memoryStream);
             AddStandardPermissions(manifest);
             AddApplicationFlags(manifest);
 
-            using MemoryStream saveStream = new MemoryStream();
+            using var saveStream = new MemoryStream();
             AxmlSaver.SaveDocument(saveStream, manifest);
             saveStream.Position = 0;
 
@@ -82,14 +82,14 @@ namespace MelonLoaderInstaller.Core.PatchSteps
 
         private void AddApplicationFlags(AxmlElement manifest)
         {
-            AxmlElement appElement = manifest.Children.Single(element => element.Name == "application");
-            if (!appElement.Attributes.Any(attribute => attribute.Name == "debuggable"))
+            var appElement = manifest.Children.Single(element => element.Name == "application");
+            if (appElement.Attributes.All(attribute => attribute.Name != "debuggable"))
             {
                 _logger.Log("Adding debuggable flag");
                 appElement.Attributes.Add(new AxmlAttribute("debuggable", AndroidNamespaceUri, DebuggableAttributeResourceId, true));
             }
 
-            if (!appElement.Attributes.Any(attribute => attribute.Name == "requestLegacyExternalStorage"))
+            if (appElement.Attributes.All(attribute => attribute.Name != "requestLegacyExternalStorage"))
             {
                 _logger.Log("Adding legacy external storage flag");
                 appElement.Attributes.Add(new AxmlAttribute("requestLegacyExternalStorage", AndroidNamespaceUri, LegacyStorageAttributeResourceId, true));
@@ -99,7 +99,7 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             if (_patcher._args.IsSplit)
             {
                 _logger.Log("Patching extract native libraries flag");
-                AxmlAttribute extract = appElement.Attributes.FirstOrDefault(attribute => attribute.Name == "extractNativeLibs");
+                var extract = appElement.Attributes.FirstOrDefault(attribute => attribute.Name == "extractNativeLibs");
                 if (extract != null)
                     extract.Value = true;
                 else
@@ -109,20 +109,20 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             }
         }
 
-        private void AddNameAttribute(AxmlElement element, string name)
+        private static void AddNameAttribute(AxmlElement element, string name)
         {
             element.Attributes.Add(new AxmlAttribute("name", AndroidNamespaceUri, NameAttributeResourceId, name));
         }
 
-        private ISet<string> GetExistingChildren(AxmlElement manifest, string childNames)
+        private static ISet<string> GetExistingChildren(AxmlElement manifest, string childNames)
         {
-            HashSet<string> result = new HashSet<string>();
+            var result = new HashSet<string>();
 
-            foreach (AxmlElement element in manifest.Children)
+            foreach (var element in manifest.Children)
             {
                 if (element.Name != childNames) { continue; }
 
-                List<AxmlAttribute> nameAttributes = element.Attributes.Where(attribute => attribute.Namespace == AndroidNamespaceUri && attribute.Name == "name").ToList();
+                var nameAttributes = element.Attributes.Where(attribute => attribute.Namespace == AndroidNamespaceUri && attribute.Name == "name").ToList();
                 // Only add children with the name attribute
                 if (nameAttributes.Count > 0) { result.Add((string)nameAttributes[0].Value); }
             }

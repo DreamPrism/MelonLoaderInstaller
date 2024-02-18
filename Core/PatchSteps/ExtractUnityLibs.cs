@@ -12,9 +12,12 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             archive.ExtractToDirectory(patcher._info.UnityBaseDirectory);
 
             // We are going to be replacing libmain, we don't need any that are included by Unity
-            foreach (string file in Directory.GetFiles(patcher._info.UnityBaseDirectory, "*.so", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(patcher._info.UnityBaseDirectory, "*.so",
+                         SearchOption.AllDirectories))
             {
                 if (Path.GetFileName(file) == "libmain.so")
+                    File.Delete(file);
+                else if (Path.GetFileName(file) == "libunity.so")
                     File.Delete(file);
             }
 

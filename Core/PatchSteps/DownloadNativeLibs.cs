@@ -29,8 +29,8 @@ namespace MelonLoaderInstaller.Core.PatchSteps
                     using HttpResponseMessage response = await httpClient.GetAsync(REPO_BASE + packageName + ".zip");
                     response.EnsureSuccessStatusCode();
 
-                    using var contentStream = await response.Content.ReadAsStreamAsync();
-                    using var fileStream = File.Create(outPath);
+                    await using var contentStream = await response.Content.ReadAsStreamAsync();
+                    await using var fileStream = File.Create(outPath);
                     await contentStream.CopyToAsync(fileStream);
                 }
 

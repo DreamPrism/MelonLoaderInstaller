@@ -1,6 +1,7 @@
 ﻿using MelonLoaderInstaller.Core.PatchSteps;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace MelonLoaderInstaller.Core
 {
@@ -29,6 +30,7 @@ namespace MelonLoaderInstaller.Core
                 _info.CreateDirectories();
 
                 _logger.Log($"Copying [ {_args.TargetApkPath} ] to [ {_info.OutputBaseApkPath} ]");
+                if (File.Exists(_info.OutputBaseApkPath)) File.Delete(_info.OutputBaseApkPath);
                 File.Copy(_args.TargetApkPath, _info.OutputBaseApkPath);
 
                 if (_args.IsSplit)
@@ -39,17 +41,17 @@ namespace MelonLoaderInstaller.Core
 
                 if (_args.ExtraSplitApkPaths != null)
                 {
-                    for (int i = 0; i < _args.ExtraSplitApkPaths.Length; i++)
+                    for (var i = 0; i < _args.ExtraSplitApkPaths.Length; i++)
                     {
-                        string from = _args.ExtraSplitApkPaths[i];
-                        string to = _info.OutputExtraApkPaths[i];
+                        var from = _args.ExtraSplitApkPaths[i];
+                        var to = _info.OutputExtraApkPaths[i];
 
                         _logger.Log($"Copying [ {from} ] to [ {to} ]");
                         File.Copy(from, to);
                     }
                 }
 
-                IPatchStep[] steps = new IPatchStep[]
+                var steps = new IPatchStep[]
                 {
                     new DetectUnityVersion(),
                     new DownloadUnityDeps(),
@@ -63,16 +65,14 @@ namespace MelonLoaderInstaller.Core
                     new CleanUp(),
                 };
 
-                foreach (IPatchStep step in steps)
+                if (steps.Select(step => step.Run(this)).Any(status => !status))
                 {
-                    bool status = step.Run(this);
-                    if (!status)
-                        throw new Exception($"Failed to complete patching.");
+                    throw new Exception("Failed to complete patching.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Log("[ERROR] " + ex.ToString());
+                _logger.Log($"[ERROR] {ex}");
                 success = false;
             }
 

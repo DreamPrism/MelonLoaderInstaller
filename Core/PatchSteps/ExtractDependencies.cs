@@ -10,8 +10,8 @@ namespace MelonLoaderInstaller.Core.PatchSteps
             patcher._logger.Log("Extracting Dependencies");
 
             {
-                using FileStream zipStream = new FileStream(patcher._args.LemonDataPath, FileMode.Open);
-                using ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+                using var zipStream = new FileStream(patcher._args.LemonDataPath, FileMode.Open);
+                using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
                 archive.ExtractToDirectory(patcher._info.LemonDataDirectory);
             }
 

@@ -35,7 +35,7 @@ namespace MelonLoaderInstaller.Core.PatchSteps
 
             try
             {
-                APKSigner signer = new APKSigner(_pemData, _logger);
+                var signer = new APKSigner(_pemData, _logger);
                 signer.Sign(apk);
                 return true;
             }

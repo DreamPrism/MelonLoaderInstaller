@@ -21,7 +21,5 @@
         public string PackageName;
 
         public bool IsSplit;
-
-        public PatchArguments() { }
     }
 }
